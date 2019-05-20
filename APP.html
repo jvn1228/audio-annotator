@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+		.notransition .v-progress-linear__bar__determinate {
+			transition: none;
+		}
+	</style>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="utf-8">
+<title></title>
+<meta name="description" content="">
+<meta name="author" content="">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="">
+<!--[if lt IE 9]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<link rel="shortcut icon" href="">
+<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
+</head>
+<body>
+	<div id="app">
+		<v-app id="inspire">
+		<v-layout align-center>
+			<v-flex sm6 offset-sm3>
+				<v-card class="pa-3">
+					<v-card-title><h2>Text: {{currMarkText}}</h2></v-card-title>
+					<div class="mr-3 ml-3">
+						<div style="position: relative;">
+							<v-icon v-for="ts in sortedMarks" v-bind:key="ts" v-bind:style="{left: marks[ts].position, position: 'absolute', top: '-16px'}">arrow_drop_down</v-icon>
+						</div>
+						<v-progress-linear class="mt-0 notransition" v-model="progress" v-on:click="seek"></v-progress-linear>
+					</div>
+					<label>Time: {{time.toFixed(2)}} / {{song.duration}}</label>
+					<v-divider class="mt-2 mb-2"></v-divider>
+					<v-btn color="success" v-on:click="togglePlay()" >{{playing ? "Pause" : "Play"}}</v-btn>
+					<v-btn v-on:click="restart()">Restart</v-btn>
+					<v-btn v-on:click="saveMarks()">Save Marks</v-btn>
+					<v-btn @click="pickFile">Load Marks</v-btn>
+					<input
+						type="file"
+						style="display: none"
+						ref="marksjson"
+						accept="*.json"
+						@change="onFilePicked"
+					>
+					<v-divider class="mt-2"></v-divider>
+					<div style="max-height: 35em; overflow: auto">
+						<v-list class="pt-4">
+							<v-list-tile v-for="(ts, idx) in sortedMarks" v-bind:key="ts">
+								<v-btn class= "mr-3" v-bind:class="{success: currMark - 1 == idx }" v-on:click="goToMark(idx)">{{ts}}</v-btn>
+								<v-text-field v-model="marks[ts].text"></v-text-field>
+								<v-icon @click="deleteMark(idx)">cancel</v-icon>
+							</v-list-tile>
+						</v-list>
+					</div>
+					<v-btn color="red" small dark size="small" @click="clear">Clear All Marks</v-btn>
+				</v-card>
+			</v-flex>
+		</v-layout>
+		</v-app>
+	</div>
+
+<!-- SCRIPTS -->
+
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+<script src="marker.js"></script>
+</body>
+</html>
