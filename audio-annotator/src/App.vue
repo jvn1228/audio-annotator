@@ -3,6 +3,18 @@
   <v-layout align-center>
     <v-flex sm6 offset-sm3>
       <v-card class="pa-3">
+        <div>
+          <v-btn @click="$refs.audiofile.click()">Load Audio</v-btn>
+          <input
+            type="file"
+            style="display: none"
+            ref="audiofile"
+            accept="audio/*"
+            @change="onAudioPicked"
+          >
+          <v-progress-circular class="notransition" v-if="loadprogress" v-model="loadprogress" color="primary"></v-progress-circular>
+          <p>{{fname}}</p>
+        </div>
         <v-card-title><h2>Text: {{currMarkText}}</h2></v-card-title>
         <div class="mr-3 ml-3">
           <div style="position: relative;">
@@ -41,43 +53,45 @@
 </template>
 
 <script>
-
-var fname = 'song.mp3'
-
-function downloadFile(data) {
-    var filename = "marks.json";
-    var blob = new Blob([JSON.stringify(data)], {type: 'text/plain'});
-    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveOrOpenBlob(blob, filename);
-    } else{
-        var e = document.createEvent('MouseEvents'),
-        a = document.createElement('a');
-        a.download = filename;
-        a.href = window.URL.createObjectURL(blob);
-        a.dataset.downloadurl = ['text/plain', a.download, a.href].join(':');
-        e.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-        a.dispatchEvent(e);
-    }
-}
+import * as io from "./utils/io.js"
+let AudioContext = window.AudioContext || window.webkitAudioContext
 
 export default {
   name: 'App',
   data() { return {
     time: 0,
     fname: null,
-    song: null,
+    song: new Audio(),
     playing: false,
     marks: {},
     sortedMarks: [],
     currMark: 0,
-    currMarkText: ""
+    currMarkText: "",
+    loadprogress: 0,
   }},
   created: function() {
     document.addEventListener('keypress', this.keyPressed)
-    this.fname = fname
-    this.song = new Audio(fname)
+  },
+  mounted: function() {
+
   },
   methods: {
+    onAudioPicked(e){
+      if (e.target.files){
+        let reader = new FileReader()
+        this.fname = e.target.files[0].name
+        reader.onprogress = (e) => {
+          let prog = e.loaded/e.total*100
+          this.loadprogress = prog
+        }
+        reader.onload = (e) => {
+          this.song.src = e.target.result
+
+          this.loadprogress = 0
+        }
+        reader.readAsDataURL(e.target.files[0])
+      }
+    },
     clear(){
       this.marks = {}
       this.sortedMarks = []
@@ -113,7 +127,7 @@ export default {
       }
     },
     calcMarkPos(time){
-      return "calc(" + (time / this.song.duration * 100 || 0) + "% - 14px)"
+      return "calc(" + (time / (this.song.duration || 1) * 100 || 0) + "% - 14px)"
     },
     keyPressed(e) {
       if (e.which === 0) {
@@ -124,10 +138,12 @@ export default {
       }
     },
     togglePlay(){
-      if (this.playing){
-        this.pause()
-      } else {
-        this.play()
+      if (this.song.duration){
+        if (this.playing){
+          this.pause()
+        } else {
+          this.play()
+        }
       }
     },
     play() {
@@ -152,7 +168,7 @@ export default {
       let el = document.querySelector(".v-progress-linear__bar"),
         mousePos = e.offsetX,
         elWidth = el.clientWidth,
-        currentTime = mousePos / elWidth * this.song.duration,
+        currentTime = mousePos / elWidth * (this.song.duration || 1),
         remMarks = this.sortedMarks.filter((ts) => ts >= currentTime)
 
       this.currMark = this.sortedMarks.length - remMarks.length - 1
@@ -165,7 +181,7 @@ export default {
     },
     saveMarks() {
       let data = {file: this.fname, marks: this.marks}
-      downloadFile(data)
+      io.downloadFile(data)
     },
     goToMark(idx) {
       this.currMark = idx
@@ -182,14 +198,14 @@ export default {
   },
   computed: {
     progress(){
-      return this.time / this.song.duration * 100 || 0
+      return this.time / (this.song.duration || 1) * 100 || 0
     }
   }
 }
 </script>
 
 <style>
-  .notransition .v-progress-linear__bar__determinate {
+  .notransition .v-progress-linear__bar__determinate, .v-progress-circular__overlay {
     transition: none;
   }
 </style>
