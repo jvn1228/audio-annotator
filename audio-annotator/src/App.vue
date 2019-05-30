@@ -117,7 +117,6 @@ export default {
         fr.addEventListener('load', () => {
           let data = JSON.parse(fr.result);
           this.fname = data.file
-          this.song = new Audio(this.fname)
           this.marks = data.marks
           this.sortedMarks = Object.keys(this.marks).sort((a, b) => a - b)
           this.currMark = 0
